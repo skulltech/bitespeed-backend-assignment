@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import { PrismaClient } from "@prisma/client";
 import { FromSchema } from "json-schema-to-ts";
 import "dotenv/config";
+import { notEmpty } from "./utils";
 
 const prisma = new PrismaClient();
 
@@ -82,8 +83,7 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
       },
     },
   },
-  // @ts-ignore
-  async (request, reply) => {
+  async (request) => {
     // TODO: handle case when both are undefined
     const { email, phoneNumber } = request.body;
 
@@ -121,10 +121,10 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
           {
             linkPrecedence: "primary",
             id: {
-              // @ts-ignore
               in: matchingContacts
                 .filter((x) => x.linkPrecedence == "secondary")
-                .map((x) => x.linkedId),
+                .map((x) => x.linkedId)
+                .filter(notEmpty),
             },
           },
           {
@@ -150,9 +150,9 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
     const primaryContact = contacts[0];
     const secondaryContacts = contacts.slice(1);
 
-    const emails = [...new Set(contacts.map((x) => x.email).filter((x) => x))];
+    const emails = [...new Set(contacts.map((x) => x.email).filter(notEmpty))];
     const phoneNumbers = [
-      ...new Set(contacts.map((x) => x.phoneNumber).filter((x) => x)),
+      ...new Set(contacts.map((x) => x.phoneNumber).filter(notEmpty)),
     ];
 
     // Merge contacts if necessary
