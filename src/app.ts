@@ -102,8 +102,11 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
 
     const primaryContact = contacts[0];
     const secondaryContacts = contacts.slice(1);
-    const emails = contacts.map((x) => x.email).filter((x) => x);
-    const phoneNumbers = contacts.map((x) => x.phoneNumber).filter((x) => x);
+
+    const emails = [...new Set(contacts.map((x) => x.email).filter((x) => x))];
+    const phoneNumbers = [
+      ...new Set(contacts.map((x) => x.phoneNumber).filter((x) => x)),
+    ];
 
     // Merge contacts if necessary
     if (secondaryContacts.find((x) => x.linkPrecedence == "primary")) {
