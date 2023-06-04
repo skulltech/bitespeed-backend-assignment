@@ -1,9 +1,23 @@
 import Fastify from "fastify";
 import { PrismaClient } from "@prisma/client";
 import { FromSchema } from "json-schema-to-ts";
+import "dotenv/config";
 
 const prisma = new PrismaClient();
-const app = Fastify({});
+
+const envToLogger = {
+  development: {
+    transport: {
+      target: "pino-pretty",
+    },
+  },
+  production: true,
+  test: false,
+};
+export const app = Fastify({
+  // @ts-ignore
+  logger: envToLogger[process.env.NODE_ENV] ?? true,
+});
 
 // Schema of POST body
 const body = {
@@ -163,10 +177,6 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
 const main = async () => {
   try {
     await app.listen({ port: 3000 });
-
-    const address = app.server.address();
-    const port = typeof address === "string" ? address : address?.port;
-    console.log("API server is listening @ port", port);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
