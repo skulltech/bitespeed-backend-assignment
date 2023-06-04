@@ -34,7 +34,7 @@ describe("Identify", () => {
     expect(response.contact.secondaryContactIds).to.deep.equal([]);
   });
 
-  it("merges two contacts when one field is common", async () => {
+  it("creates secondary contact when given new information about existing customer", async () => {
     const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
     const response = await identify("mcfly@hillvalley.edu", "123456");
 
@@ -47,5 +47,77 @@ describe("Identify", () => {
     ]);
     expect(response.contact.phoneNumbers).to.deep.equal(["123456"]);
     expect(response.contact.secondaryContactIds.length).to.equal(1);
+  });
+
+  it("returns merged contacts when given only phoneNumber", async () => {
+    // Set up
+    const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
+    await identify("mcfly@hillvalley.edu", "123456");
+
+    const response = await identify(null, "123456");
+
+    expect(response.contact.primaryContactId).to.equal(
+      primaryContact.contact.primaryContactId
+    );
+    expect(response.contact.emails).to.deep.equal([
+      "lorraine@hillvalley.edu",
+      "mcfly@hillvalley.edu",
+    ]);
+    expect(response.contact.phoneNumbers).to.deep.equal(["123456"]);
+    expect(response.contact.secondaryContactIds.length).to.equal(1);
+  });
+
+  it("returns merged contacts when given primary contact email", async () => {
+    // Set up
+    const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
+    await identify("mcfly@hillvalley.edu", "123456");
+
+    const response = await identify("lorraine@hillvalley.edu", null);
+
+    expect(response.contact.primaryContactId).to.equal(
+      primaryContact.contact.primaryContactId
+    );
+    expect(response.contact.emails).to.deep.equal([
+      "lorraine@hillvalley.edu",
+      "mcfly@hillvalley.edu",
+    ]);
+    expect(response.contact.phoneNumbers).to.deep.equal(["123456"]);
+    expect(response.contact.secondaryContactIds.length).to.equal(1);
+  });
+
+  it("returns merged contacts when given secondary contact email", async () => {
+    // Set up
+    const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
+    await identify("mcfly@hillvalley.edu", "123456");
+
+    const response = await identify("mcfly@hillvalley.edu", null);
+
+    expect(response.contact.primaryContactId).to.equal(
+      primaryContact.contact.primaryContactId
+    );
+    expect(response.contact.emails).to.deep.equal([
+      "lorraine@hillvalley.edu",
+      "mcfly@hillvalley.edu",
+    ]);
+    expect(response.contact.phoneNumbers).to.deep.equal(["123456"]);
+    expect(response.contact.secondaryContactIds.length).to.equal(1);
+  });
+
+  it("converts primary contacts to secondary when they are merged", async () => {
+    // Set up
+    const primaryContact = await identify("george@hillvalley.edu", "919191");
+    await identify("biffsucks@hillvalley.edu", "717171");
+
+    const response = await identify("george@hillvalley.edu", "717171");
+
+    expect(response.contact.primaryContactId).to.equal(
+      primaryContact.contact.primaryContactId
+    );
+    expect(response.contact.emails).to.deep.equal([
+      "george@hillvalley.edu",
+      "biffsucks@hillvalley.edu",
+    ]);
+    expect(response.contact.phoneNumbers).to.deep.equal(["919191", "717171"]);
+    expect(response.contact.secondaryContactIds.length).to.equal(2);
   });
 });
