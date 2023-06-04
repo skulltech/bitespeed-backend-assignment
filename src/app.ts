@@ -88,7 +88,7 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
     const { email, phoneNumber } = request.body;
 
     // Check if exists
-    const contacts = await prisma.contact.findMany({
+    const matchingContacts = await prisma.contact.findMany({
       where: {
         // Either email or phoneNumber matches
         OR: [{ email }, { phoneNumber }],
@@ -96,7 +96,7 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
     });
 
     // No existing rows, create primary contact
-    if (!contacts.length) {
+    if (!matchingContacts.length) {
       const contact = await prisma.contact.create({
         data: {
           email,
@@ -113,6 +113,39 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
         },
       };
     }
+
+    // Fetch contacts linked to the matching ones
+    const linkedContacts = await prisma.contact.findMany({
+      where: {
+        OR: [
+          {
+            linkPrecedence: "primary",
+            id: {
+              // @ts-ignore
+              in: matchingContacts
+                .filter((x) => x.linkPrecedence == "secondary")
+                .map((x) => x.linkedId),
+            },
+          },
+          {
+            linkPrecedence: "secondary",
+            linkedId: {
+              in: matchingContacts
+                .filter((x) => x.linkPrecedence == "primary")
+                .map((x) => x.id),
+            },
+          },
+        ],
+        id: {
+          not: {
+            in: matchingContacts.map((x) => x.id),
+          },
+        },
+      },
+    });
+    const contacts = [...matchingContacts, ...linkedContacts].sort(
+      (a, b) => a.id - b.id
+    );
 
     const primaryContact = contacts[0];
     const secondaryContacts = contacts.slice(1);

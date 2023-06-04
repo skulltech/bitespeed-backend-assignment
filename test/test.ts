@@ -118,6 +118,6 @@ describe("Identify", () => {
       "biffsucks@hillvalley.edu",
     ]);
     expect(response.contact.phoneNumbers).to.deep.equal(["919191", "717171"]);
-    expect(response.contact.secondaryContactIds.length).to.equal(2);
+    expect(response.contact.secondaryContactIds.length).to.equal(1);
   });
 });
