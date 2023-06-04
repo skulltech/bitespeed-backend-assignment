@@ -50,7 +50,7 @@ describe("Identify", () => {
     expect(response.contact.secondaryContactIds.length).to.equal(1);
   });
 
-  it("returns merged contacts when given only phoneNumber", async () => {
+  it("returns merged contacts when given common field", async () => {
     // Set up
     const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
     await identify("mcfly@hillvalley.edu", "123456");
@@ -68,7 +68,7 @@ describe("Identify", () => {
     expect(response.contact.secondaryContactIds.length).to.equal(1);
   });
 
-  it("returns merged contacts when given primary contact email", async () => {
+  it("returns merged contacts when given non-common field of primary contact", async () => {
     // Set up
     const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
     await identify("mcfly@hillvalley.edu", "123456");
@@ -86,7 +86,7 @@ describe("Identify", () => {
     expect(response.contact.secondaryContactIds.length).to.equal(1);
   });
 
-  it("returns merged contacts when given secondary contact email", async () => {
+  it("returns merged contacts when given non-common field of secondary contact", async () => {
     // Set up
     const primaryContact = await identify("lorraine@hillvalley.edu", "123456");
     await identify("mcfly@hillvalley.edu", "123456");
@@ -104,7 +104,7 @@ describe("Identify", () => {
     expect(response.contact.secondaryContactIds.length).to.equal(1);
   });
 
-  it("converts primary contacts to secondary when they are merged", async () => {
+  it("converts primary contacts to secondary ones when they are merged", async () => {
     // Set up
     const primaryContact = await identify("george@hillvalley.edu", "919191");
     await identify("biffsucks@hillvalley.edu", "717171");

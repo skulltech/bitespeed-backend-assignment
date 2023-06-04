@@ -21,11 +21,12 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
       },
     },
   },
-  async (request) => {
-    // TODO: handle case when both are undefined
+  async (request, reply) => {
     const { email, phoneNumber } = request.body;
+    // Sanity check: make sure either email or phoneNumber exists
+    if (!email && !phoneNumber) return reply.code(400).send();
 
-    // Check if exists
+    // Get contacts with matching email// phoneNumber
     const matchingContacts = await prisma.contact.findMany({
       where: {
         // Either email or phoneNumber matches
@@ -81,6 +82,8 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
         },
       },
     });
+
+    // Consolidate data
     const contacts = [...matchingContacts, ...linkedContacts].sort(
       (a, b) => a.id - b.id
     );
@@ -93,7 +96,7 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
       ...new Set(contacts.map((x) => x.phoneNumber).filter(notEmpty)),
     ];
 
-    // Merge contacts if necessary
+    // If necessary, merge primary contacts and make the newer ones secondary
     if (secondaryContacts.find((x) => x.linkPrecedence == "primary")) {
       await prisma.contact.updateMany({
         where: {
