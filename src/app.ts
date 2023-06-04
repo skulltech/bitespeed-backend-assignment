@@ -68,15 +68,46 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
       },
     },
   },
+  // @ts-ignore
   async (request, reply) => {
+    // TODO: handle case when both are undefined
     const { email, phoneNumber } = request.body;
+
+    // Check if exists
+    const contacts = await prisma.contact.findMany({
+      where: {
+        // Either email or phoneNumber matches
+        OR: [{ email }, { phoneNumber }],
+      },
+    });
+
+    if (!contacts.length) {
+      // Create contact
+      const contact = await prisma.contact.create({
+        data: {
+          email,
+          phoneNumber,
+          linkPrecedence: "primary",
+        },
+      });
+      return {
+        contact: {
+          primaryContactId: contact.id,
+          emails: contact.email ? [contact.email] : [],
+          phoneNumbers: contact.phoneNumber ? [contact.phoneNumber] : [],
+          secondaryContactIds: [],
+        },
+      };
+    }
 
     return {
       contact: {
-        primaryContactId: 1,
-        emails: [],
-        phoneNumbers: [],
-        secondaryContactIds: [],
+        primaryContactId: contacts[0].id,
+        emails: contacts.filter((x) => x.email).map((x) => x.email),
+        phoneNumbers: contacts
+          .filter((x) => x.phoneNumber)
+          .map((x) => x.phoneNumber),
+        secondaryContactIds: contacts.slice(1).map((x) => x.id),
       },
     };
   }
