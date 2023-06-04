@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node src/app.ts",
-    "test": "NODE_ENV=test ts-mocha test/test.ts"
+    "test": "NODE_ENV=test ts-mocha test/test.ts --exit"
   },
   "dependencies": {
     "@prisma/client": "4.15.0",

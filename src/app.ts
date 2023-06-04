@@ -33,7 +33,7 @@ const body = {
 } as const;
 
 // Schema of success response
-const reply = {
+export const reply = {
   type: "object",
   properties: {
     contact: {
