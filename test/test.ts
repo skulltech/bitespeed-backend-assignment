@@ -1,8 +1,9 @@
 import { describe } from "mocha";
 import { PrismaClient } from "@prisma/client";
-import { app, reply } from "../src/app";
+import { app } from "../src/app";
 import { expect } from "chai";
 import { FromSchema } from "json-schema-to-ts";
+import { reply } from "../src/utils";
 
 const prisma = new PrismaClient();
 

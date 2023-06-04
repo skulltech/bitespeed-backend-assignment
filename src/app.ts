@@ -2,76 +2,14 @@ import Fastify from "fastify";
 import { PrismaClient } from "@prisma/client";
 import { FromSchema } from "json-schema-to-ts";
 import "dotenv/config";
-import { notEmpty } from "./utils";
+import { notEmpty, envToLogger, body, reply } from "./utils";
 
 const prisma = new PrismaClient();
 
-const envToLogger = {
-  development: {
-    transport: {
-      target: "pino-pretty",
-    },
-  },
-  production: true,
-  test: false,
-};
 export const app = Fastify({
   // @ts-ignore
   logger: envToLogger[process.env.NODE_ENV] ?? true,
 });
-
-// Schema of POST body
-const body = {
-  type: "object",
-  properties: {
-    email: {
-      type: "string",
-    },
-    phoneNumber: {
-      type: "string",
-    },
-  },
-} as const;
-
-// Schema of success response
-export const reply = {
-  type: "object",
-  properties: {
-    contact: {
-      type: "object",
-      properties: {
-        primaryContactId: {
-          type: "number",
-        },
-        emails: {
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-        phoneNumbers: {
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-        secondaryContactIds: {
-          type: "array",
-          items: {
-            type: "number",
-          },
-        },
-      },
-      required: [
-        "primaryContactId",
-        "emails",
-        "phoneNumbers",
-        "secondaryContactIds",
-      ],
-    },
-  },
-  required: ["contact"],
-} as const;
 
 app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
   "/identify",
