@@ -80,9 +80,11 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
         OR: [{ email }, { phoneNumber }],
       },
     });
+    const emails = contacts.map((x) => x.email).filter((x) => x);
+    const phoneNumbers = contacts.map((x) => x.phoneNumber).filter((x) => x);
 
+    // No existing rows, create primary contact
     if (!contacts.length) {
-      // Create contact
       const contact = await prisma.contact.create({
         data: {
           email,
@@ -100,13 +102,38 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
       };
     }
 
+    // Check if payload contains new information
+    const emailIsNew = email && !emails.includes(email);
+    const phoneNumberIsNew = phoneNumber && !phoneNumbers.includes(phoneNumber);
+    if (emailIsNew || phoneNumberIsNew) {
+      // Create a new secondary contact
+      const contact = await prisma.contact.create({
+        data: {
+          email,
+          phoneNumber,
+          linkPrecedence: "secondary",
+        },
+      });
+      return {
+        contact: {
+          primaryContactId: contacts[0].id,
+          emails: emailIsNew ? [...emails, email] : emails,
+          phoneNumbers: phoneNumberIsNew
+            ? [...phoneNumbers, phoneNumber]
+            : phoneNumbers,
+          secondaryContactIds: [
+            ...contacts.slice(1).map((x) => x.id),
+            contact.id,
+          ],
+        },
+      };
+    }
+
     return {
       contact: {
         primaryContactId: contacts[0].id,
-        emails: contacts.filter((x) => x.email).map((x) => x.email),
-        phoneNumbers: contacts
-          .filter((x) => x.phoneNumber)
-          .map((x) => x.phoneNumber),
+        emails,
+        phoneNumbers,
         secondaryContactIds: contacts.slice(1).map((x) => x.id),
       },
     };
