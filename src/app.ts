@@ -80,8 +80,6 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
         OR: [{ email }, { phoneNumber }],
       },
     });
-    const emails = contacts.map((x) => x.email).filter((x) => x);
-    const phoneNumbers = contacts.map((x) => x.phoneNumber).filter((x) => x);
 
     // No existing rows, create primary contact
     if (!contacts.length) {
@@ -102,6 +100,24 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
       };
     }
 
+    const primaryContact = contacts[0];
+    const secondaryContacts = contacts.slice(1);
+    const emails = contacts.map((x) => x.email).filter((x) => x);
+    const phoneNumbers = contacts.map((x) => x.phoneNumber).filter((x) => x);
+
+    // Merge contacts if necessary
+    if (secondaryContacts.find((x) => x.linkPrecedence == "primary")) {
+      await prisma.contact.updateMany({
+        where: {
+          id: { in: secondaryContacts.map((x) => x.id) },
+        },
+        data: {
+          linkPrecedence: "secondary",
+          linkedId: primaryContact.id,
+        },
+      });
+    }
+
     // Check if payload contains new information
     const emailIsNew = email && !emails.includes(email);
     const phoneNumberIsNew = phoneNumber && !phoneNumbers.includes(phoneNumber);
@@ -112,11 +128,12 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
           email,
           phoneNumber,
           linkPrecedence: "secondary",
+          linkedId: primaryContact.id,
         },
       });
       return {
         contact: {
-          primaryContactId: contacts[0].id,
+          primaryContactId: primaryContact.id,
           emails: emailIsNew ? [...emails, email] : emails,
           phoneNumbers: phoneNumberIsNew
             ? [...phoneNumbers, phoneNumber]
@@ -131,10 +148,10 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
 
     return {
       contact: {
-        primaryContactId: contacts[0].id,
+        primaryContactId: primaryContact.id,
         emails,
         phoneNumbers,
-        secondaryContactIds: contacts.slice(1).map((x) => x.id),
+        secondaryContactIds: secondaryContacts.map((x) => x.id),
       },
     };
   }
