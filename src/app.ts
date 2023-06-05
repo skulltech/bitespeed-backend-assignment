@@ -147,14 +147,3 @@ app.post<{ Body: FromSchema<typeof body>; Reply: FromSchema<typeof reply> }>(
     };
   }
 );
-
-const main = async () => {
-  try {
-    await app.listen({ port: 3000 });
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
-};
-
-main();
