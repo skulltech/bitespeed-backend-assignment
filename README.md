@@ -23,8 +23,11 @@ P.S: My resume is available at [`resume-sumit-ghosh.pdf`](resume-sumit-ghosh.pdf
 
 ## Testing
 
-Stop the any local Postgres instance if running. Then run
-
-```
-yarn test
-```
+1. Bring up a local Postgres instance by running
+   ```
+   docker compose up
+   ```
+2. Run tests
+   ```
+   yarn test
+   ```
